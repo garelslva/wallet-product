@@ -4,7 +4,7 @@ Wallet Service is a digital wallet application developed with Java, Spring Boot,
 
 ---
 
-## Prerequisites
+## Pre-requisites
 
 - **Docker**: Ensure Docker is installed and working.  
   [Download Docker](https://www.docker.com/get-started)
@@ -129,7 +129,7 @@ This application uses multiple services orchestrated via Docker Compose. Below i
 2. **Build and Start the Containers**  
    Execute the command below to build the images (if necessary) and start all the containers:
    ```bash
-   docker-compose up --build
+   docker-compose -f wallet-docker-compose.yml up --build
 
 3. To view the real-time logs of the wallet-service container, use the following command:
    ```bash
