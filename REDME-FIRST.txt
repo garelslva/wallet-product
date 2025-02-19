@@ -1,0 +1,11 @@
+Directory Structure:
+|
+|_DOCUMENTATION :  Design System - Archtecture Document + Solution
+|
+|_logstash: logstash file configuration for input run container
+|
+|_prometheus: prometheus file configuration for input run container
+|
+|_wallet-service: code implementation, api solution, wallet service 
+|
+|_wallet-docker-composse.yml: stack server automatized for Run Docker local or Rancher local
