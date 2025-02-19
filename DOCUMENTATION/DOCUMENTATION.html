@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Architecture Document: Wallet Service</title>
+  <style>
+    /* Basic Reset & Body */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Smooth scroll behavior + offset so anchors don't hide behind the fixed header */
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 120px; /* same height as header + top margin */
+    }
+
+    body {
+      font-family: "Open Sans", Arial, sans-serif;
+      font-size: 16px;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    /* Header (title, version, date, author) - Fixed at the top */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 999;
+    }
+    .header h1 {
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .header p {
+      margin: 4px 0;
+    }
+
+    /*
+      Page container:
+      We'll assume the header has about ~100-120px height.
+      We give .page-container a top margin to avoid overlapping the fixed header.
+    */
+    .page-container {
+      margin-top: 120px;
+    }
+
+    /* Sidebar Navigation - fixed, top aligns under the header */
+    .sidebar {
+      position: fixed;
+      top: 200px;
+      left: 0;
+      width: 250px;
+      background-color: #37474f;
+      color: #fff;
+      padding: 80px;
+      box-sizing: border-box;
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+    .sidebar ul {
+      list-style-type: none;
+    }
+    .sidebar li {
+      margin-bottom: 8px;
+    }
+    .sidebar a {
+      text-decoration: none;
+      color: #fff;
+      transition: color 0.2s ease;
+    }
+    .sidebar a:hover {
+      color: #ffeb3b;
+    }
+
+    /*
+      Main Content area:
+      We'll give it a left margin so it doesn't overlap the fixed sidebar.
+    */
+    .content {
+      margin-left: 270px;
+      padding: 80px;
+      background-color: #fdfdfd;
+      box-shadow: 0 0 12px rgba(0,0,0,0.08);
+    }
+
+    /* Headings */
+    h2, h3, h4 {
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    h2 {
+      color: #2e7d32;
+    }
+    h3 {
+      color: #388e3c;
+    }
+    h4 {
+      color: #43a047;
+    }
+
+    /* Paragraphs */
+    p {
+      margin-bottom: 1em;
+      line-height: 1.6;
+      text-align: justify;
+    }
+
+    /* Lists */
+    ul, ol {
+      display: inline-block;
+      margin: 1em 0;
+      text-align: left;
+    }
+    ul ul, ol ul, ul ol, ol ol {
+      margin-left: 1.5em;
+    }
+
+    /* Preformatted text */
+    pre {
+      display: inline-block;
+      text-align: left;
+      background-color: #fafafa;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin: 1em 0;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+
+    /* Code blocks */
+    code {
+      background-color: #2b2b2b;
+      color: #f8f8f2;
+      padding: 2px 4px;
+      font-family: "Courier New", Courier, monospace;
+      border-radius: 3px;
+    }
+
+    /* Numbered lists */
+    ol {
+      margin-left: 1.5em;
+    }
+    ol li {
+      margin-bottom: 0.5em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Section (fixed) -->
+  <div class="header">
+    <h1>Architecture Document: Wallet Service</h1>
+    <p>Version: 1.1</p>
+    <p>Date: February 10, 2025</p>
+    <p>Author: Garel Silva</p>
+    <p>Contact: +55 19 9 9969 0160</p>
+    <p>Email: garel_vinicius@hotmail.com</p>
+  </div>
+
+  <!-- The container for page content (below the fixed header) -->
+  <div class="page-container">
+
+    <!-- Sidebar Navigation (fixed, below header) -->
+    <div class="sidebar">
+      <ul>
+        <li><a href="#section1">1. Introduction</a></li>
+          <ul>
+            <li><a href="#section1-1">1.1 Objectives</a></li>
+            <li><a href="#section1-2">1.2 Scope</a></li>
+          </ul>
+        <li><a href="#section2">2. Requirements</a></li>
+          <ul>
+            <li><a href="#section2-1">2.1 Functional Requirements</a></li>
+            <li><a href="#section2-2">2.2 Non-Functional Requirements</a></li>
+          </ul>
+        <li><a href="#section3">3. High-Level Architecture Overview</a></li>
+          <ul>
+            <li><a href="#section3-1">3.1 Diagram</a></li>
+          </ul>
+        <li><a href="#section4">4. Data Flow and Security</a></li>
+        <li><a href="#section5">5. Main Components</a></li>
+          <ul>
+            <li><a href="#section5-1">5.1 Wallet Service (Reactive Application)</a></li>
+            <li><a href="#section5-2">5.2 Relational Database</a></li>
+            <li><a href="#section5-3">5.3 Message Broker</a></li>
+            <li><a href="#section5-4">5.4 Consumer Services</a></li>
+            <li><a href="#section5-5">5.5 Security / Authorization Module</a></li>
+          </ul>
+        <li><a href="#section6">6. Transaction Tracing and Correlation</a></li>
+          <ul>
+            <li><a href="#section6-1">6.1 Unique Identifier</a></li>
+            <li><a href="#section6-2">6.2 Generation, Propagation, and Storage</a></li>
+            <li><a href="#section6-3">6.3 Architectural Benefits</a></li>
+            <li><a href="#section6-4">6.4 Future Considerations</a></li>
+          </ul>
+        <li><a href="#section7">7. Key Flows (with Security and Validations)</a></li>
+          <ul>
+            <li><a href="#section7-1">7.1 Create Wallet</a></li>
+            <li><a href="#section7-2">7.2 Deposit</a></li>
+            <li><a href="#section7-3">7.3 Withdraw</a></li>
+            <li><a href="#section7-4">7.4 Transfer</a></li>
+            <li><a href="#section7-5">7.5 Balance &amp; Historical Queries</a></li>
+          </ul>
+        <li><a href="#section8">8. Reliability and Security Mechanisms</a></li>
+        <li><a href="#section9">9. Observability and Monitoring</a></li>
+        <li><a href="#section10">10. Final Considerations</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content (scrollable, margin-left for sidebar) -->
+    <div class="content">
+
+      <!-- Section 1: Introduction -->
+      <h2 id="section1">1. Introduction</h2>
+      <p>
+        This document describes the proposed architecture for developing a digital wallet service (Wallet Service) responsible for managing users’ funds. The project aims to provide high availability, transactional consistency, scalability, auditability, and security for financial operations, while also publishing events to integrate with other ecosystem components.
+      </p>
+      <h3 id="section1-1">1.1 Objectives</h3>
+      <ul>
+        <li>Provide a service for creating and managing wallets linked to users.</li>
+        <li>Enable operations such as depositing, withdrawing, and transferring funds.</li>
+        <li>Ensure that balances and transactions are stored and queried reliably and are auditable.</li>
+        <li>Integrate securely with other modules, ensuring authentication, permissions, and validations.</li>
+        <li>Publish events (via a message broker) for reporting, notifications, anti-fraud, etc.</li>
+        <li>Expose reactive endpoints (using Spring WebFlux + R2DBC) for wallet manipulation and queries.</li>
+      </ul>
+      <h3 id="section1-2">1.2 Scope</h3>
+      <ul>
+        <li>Creation and maintenance of wallets and associated users.</li>
+        <li>Transactional operations: deposits, withdrawals, and transfers.</li>
+        <li>Balance queries (both current and historical).</li>
+        <li>Reliable persistence (atomic transactions, audit logs).</li>
+        <li>Security: authentication, authorization, access control, and business rule validations.</li>
+        <li>Event publishing for asynchronous notifications and data sharing.</li>
+      </ul>
+
+      <!-- Section 2: Requirements -->
+      <h2 id="section2">2. Requirements</h2>
+      <h3 id="section2-1">2.1 Functional Requirements</h3>
+      <ul>
+        <li>Create a wallet for a user, starting with a zero balance.</li>
+        <li>Deposit funds into a wallet.</li>
+        <li>Withdraw funds from a wallet, validating the available balance.</li>
+        <li>Transfer funds between two wallets.</li>
+        <li>Retrieve the current balance of a wallet.</li>
+        <li>Retrieve a historical balance (at a specific date/time).</li>
+      </ul>
+      <h3 id="section2-2">2.2 Non-Functional Requirements</h3>
+      <ul>
+        <li><strong>Reliability:</strong> Prevent data loss or inconsistencies that could compromise the platform.</li>
+        <li><strong>Scalability:</strong> Handle a high volume of concurrent transactions.</li>
+        <li><strong>Auditability:</strong> All operations must be fully traceable and reconstructable.</li>
+        <li><strong>Reactivity:</strong> Use a non-blocking framework (Spring WebFlux) and reactive persistence (R2DBC).</li>
+        <li><strong>Event Publishing:</strong> Use a message broker (Kafka/RabbitMQ) to integrate with external services.</li>
+        <li><strong>Security:</strong>
+          <ul>
+            <li><em>Authentication:</em> Ensure that only authenticated users can perform operations.</li>
+            <li><em>Authorization/Permissions:</em> Appropriately control access to wallets and data (e.g., users can only operate on their own wallets).</li>
+            <li><em>Validation:</em> Enforce input validation and consistency of business rules.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <!-- Section 3: High-Level Architecture Overview -->
+      <h2 id="section3">3. High-Level Architecture Overview</h2>
+      <h3 id="section3-1">3.1 Diagram</h3>
+      <p>
+        Below is an ASCII diagram illustrating the hybrid reactive architecture. It provides transactional persistence for local consistency and event publishing to external consumers, including a security layer:
+      </p>
+      <p><strong>Diagram 1: Layer 1 High Level</strong></p>
+      <p><strong>Diagram 2: Layer 2 High Level</strong></p>
+      <p>
+        <strong>Financial Operations:</strong> Deposits, withdrawals, and transfers are performed atomically in the database via R2DBC.<br>
+        <strong>Events:</strong> Published after each successful transaction commit, enabling asynchronous integration with reporting, notifications, etc.<br>
+        <strong>Security:</strong> Uses tokens (JWT, OAuth2/OIDC) for authentication and in-service authorization (wallet-level permissions).
+      </p>
+
+      <!-- Section 4: Data Flow and Security -->
+      <h2 id="section4">4. Data Flow and Security</h2>
+      <ol>
+        <li>The user obtains an access token (JWT) from an Identity Provider (e.g., Keycloak, Auth0, etc.).</li>
+        <li>The client (e.g., a frontend application) sends HTTP requests to the Wallet Service along with the token.</li>
+        <li>The Wallet Service validates the token (signature, expiration, scopes) and checks permissions (e.g., whether the user can operate on this wallet).</li>
+        <li>Upon successful validation, it initiates a reactive transactional flow to process the deposit, withdrawal, or transfer in the database.</li>
+        <li>After the transaction is confirmed, the service publishes an event to the message broker.</li>
+        <li>Consumer services process these events independently (reporting, notifications, anti-fraud, etc.).</li>
+      </ol>
+
+      <!-- Section 5: Main Components -->
+      <h2 id="section5">5. Main Components</h2>
+      <h3 id="section5-1">5.1 Wallet Service (Reactive Application)</h3>
+      <p><strong>HTTP Layer (Spring WebFlux):</strong></p>
+      <ul>
+        <li><code>POST /wallets</code> (create wallet)</li>
+        <li><code>POST /wallets/{id}/deposit</code></li>
+        <li><code>POST /wallets/{id}/withdraw</code></li>
+        <li><code>POST /wallets/{sourceId}/transfer/{destId}</code></li>
+        <li><code>GET /wallets/{id}/balance</code></li>
+        <li><code>GET /wallets/{id}/balance?date=...</code> (historical balance)</li>
+      </ul>
+      <p><strong>Security Middleware:</strong> Validates JWT tokens and extracts claims (user ID, permissions).</p>
+      <p><strong>Business Layer:</strong> Handles wallet creation, deposit, withdrawal, and transfer logic. Includes balance checks, business rules, and safeguards against inconsistencies.</p>
+      <p><strong>Persistence Layer (R2DBC):</strong></p>
+      <ul>
+        <li><strong>User:</strong> Stores local user information or an external ID if integrated with an identity provider.</li>
+        <li><strong>Wallet:</strong> Fields: <code>wallet_id</code>, <code>user_id</code>, <code>current_balance</code>, <code>status</code>, etc.</li>
+        <li><strong>Transaction:</strong> Fields: <code>transaction_id</code>, <code>wallet_id</code>, <code>type</code> (DEPOSIT, WITHDRAW, TRANSFER), <code>amount</code>, <code>timestamp</code>, etc.</li>
+      </ul>
+      <p>Atomic transactions ensure that both transaction records and wallet balance updates occur together.</p>
+      <h3 id="section5-2">5.2 Relational Database (PostgreSQL, MySQL, etc.)</h3>
+      <ul>
+        <li>Supports transactions with a high isolation level (e.g., REPEATABLE READ, SERIALIZABLE).</li>
+        <li>Constraints and foreign keys ensure referential integrity among User, Wallet, and Transaction.</li>
+        <li>Indexes in the Transaction table (e.g., by <code>wallet_id</code> and date) optimize historical balance queries.</li>
+      </ul>
+      <h3 id="section5-3">5.3 Message Broker (Kafka/RabbitMQ)</h3>
+      <ul>
+        <li>Receives events from the Wallet Service after transaction commits.</li>
+        <li>Stores messages for consumer services (notifications, auditing, reporting, etc.).</li>
+        <li>Ensures decoupling between the wallet microservice and other functionality.</li>
+      </ul>
+      <h3 id="section5-4">5.4 Consumer Services (Asynchronous)</h3>
+      <ul>
+        <li><strong>Notifications:</strong> Send emails or push messages about transactions.</li>
+        <li><strong>Reporting:</strong> Generate usage statistics and financial volume data.</li>
+        <li><strong>Anti-Fraud, External Audit, etc.:</strong> Each service processes events according to its logic, without impacting the Wallet Service’s critical flow.</li>
+      </ul>
+      <h3 id="section5-5">5.5 Security / Authorization Module</h3>
+      <ul>
+        <li><strong>Token Validation:</strong> Checks token signature, expiration, and scopes.</li>
+        <li><strong>Authorization:</strong> Ensures only the wallet owner (or an admin) can perform certain commands.</li>
+        <li><strong>Access Rules (simple example):</strong> <code>wallet.user_id == token.user_id</code> → the user can manage deposits/withdrawals/transfers on that wallet.</li>
+        <li><strong>Replay Protection:</strong> Track a nonce or requestId to avoid duplicate requests.</li>
+      </ul>
+
+      <!-- Section 6: Transaction Tracing and Correlation -->
+      <h2 id="section6">6. Transaction Tracing and Correlation</h2>
+      <h3 id="section6-1">6.1 Unique Identifier: <code>requestTransactionId</code></h3>
+      <p>
+        To ensure complete traceability of every operation within the Wallet Service, the <strong>requestTransactionId</strong> identifier has been implemented. This field is generated for each request and serves as a robust hash that aggregates relevant user information (e.g., <code>userId</code>), the timestamp of the request, and a random component (<em>nonce</em>) to guarantee both uniqueness and unpredictability.
+      </p>
+      <h3 id="section6-2">6.2 Generation, Propagation, and Storage Mechanism</h3>
+      <p><strong>Generation:</strong></p>
+      <p>
+        When a request is received, the entry layer (Spring WebFlux) calls an identifier generator that employs a hash algorithm (such as SHA-256) to combine:
+      </p>
+      <ul>
+        <li>User data (e.g., <code>userId</code>),</li>
+        <li>Request timestamp,</li>
+        <li>A random value (<em>nonce</em>).</li>
+      </ul>
+      <p>
+        This combination results in the <strong>requestTransactionId</strong>, which acts as the “fingerprint” of the operation.
+      </p>
+      <p><strong>Propagation:</strong></p>
+      <p>
+        Once generated, the <strong>requestTransactionId</strong> is injected into the request metadata and propagated through all layers of the system:
+      </p>
+      <ul>
+        <li><strong>HTTP Layer:</strong> Included in the request header to trace incoming traffic.</li>
+        <li><strong>Business and Persistence Layers:</strong> Passed along to transaction records and audit logs.</li>
+        <li><strong>Event Publishing:</strong> Incorporated into messages sent to the message broker (Kafka/RabbitMQ), enabling correlation between operations and events consumed by other services.</li>
+      </ul>
+      <p><strong>Storage:</strong></p>
+      <p>
+        Every operation recorded in the <code>Transaction</code> table—as well as in structured audit logs—stores the associated <strong>requestTransactionId</strong>. This allows for the identification of the origin and complete flow of the transaction and facilitates the investigation of inconsistencies or failures by correlating distributed logs.
+      </p>
+      <h3 id="section6-3">6.3 Architectural Benefits and Justifications</h3>
+      <ul>
+        <li><strong>Complete Auditability:</strong> The inclusion of the <strong>requestTransactionId</strong> in every record enables reconstructing the entire transaction path, thereby simplifying audits and security investigations.</li>
+        <li><strong>Diagnosis and Debugging:</strong> In cases of failure or unexpected behavior, the identifier facilitates the correlation of logs across various system layers (HTTP, business logic, database, and messaging), accelerating issue diagnosis and incident resolution.</li>
+        <li><strong>Integration with Distributed Tracing Systems:</strong> The solution integrates seamlessly with tracing tools such as Jaeger, Zipkin, or OpenTelemetry, providing end-to-end visibility of transactions and enabling detailed performance monitoring.</li>
+        <li><strong>Reduction of Risks and Inconsistencies:</strong> Ensuring that each operation has a unique, traceable identifier minimizes the risk of duplication or loss of critical information, thereby strengthening data consistency and transactional integrity in high-concurrency scenarios.</li>
+        <li><strong>Standardization and Monitoring:</strong> The systematic inclusion of the <strong>requestTransactionId</strong> in logs, events, and transaction records enables the creation of customized dashboards and alerts for real-time monitoring and proactive responses to anomalies.</li>
+      </ul>
+      <h3 id="section6-4">6.4 Future Considerations and Improvements</h3>
+      <ul>
+        <li><strong>Automated Log Correlation:</strong> Standardizing the <strong>requestTransactionId</strong> facilitates integration with centralized log management solutions (such as the ELK Stack or Grafana Loki), enhancing the analysis and correlation of events.</li>
+        <li><strong>Enhanced Monitoring Mechanisms:</strong> The identifier can be leveraged to generate detailed metrics, allowing in-depth monitoring of each processing step within a transaction, thereby improving overall system observability.</li>
+        <li><strong>Enhancement in Hash Generation:</strong> Periodic reviews of the hash algorithm and the components used (<code>userId</code>, timestamp, <em>nonce</em>) should be conducted to ensure the mechanism remains secure and performant as conditions evolve.</li>
+      </ul>
+      <p>
+        By incorporating this tracing solution, the Wallet Service not only reinforces its transactional integrity and reliability but also aligns with best practices in auditability and monitoring, providing a solid foundation for the scalability and security of financial operations.
+      </p>
+
+      <!-- Section 7: Key Flows (with Security and Validations) -->
+      <h2 id="section7">7. Key Flows (with Security and Validations)</h2>
+      <p>
+        <strong>Note:</strong> In addition to the transactional flow described for each operation (deposit, withdrawal, transfer, balance update), an event-driven process via Kafka (using a queue) has been considered to ensure higher volume, consistency, and reliability in processing. Thus, each operation generates an event that is queued and consumed, allowing for scalability and robustness in handling large volumes of concurrent transactions.
+      </p>
+      <h3 id="section7-1">7.1 Create Wallet</h3>
+      <ul>
+        <li><strong>Request:</strong> <code>POST /wallets</code> + Authentication Header (Bearer Token).</li>
+        <li><strong>Process:</strong>
+          <ol>
+            <li>Validate the token and check permission to create a wallet (e.g., any authenticated user may do so).</li>
+            <li>Insert a record into the Wallet table (balance = 0), associated with the <code>user_id</code> from the token.</li>
+            <li>Commit the transaction.</li>
+            <li>(Optional) Publish a “WalletCreatedEvent.”</li>
+          </ol>
+        </li>
+      </ul>
+      <h3 id="section7-2">7.2 Deposit</h3>
+      <ul>
+        <li><strong>Request:</strong> <code>POST /wallets/{id}/deposit</code> + token.</li>
+        <li><strong>Process:</strong>
+          <ol>
+            <li>Validate the token and confirm that the user has permission for wallet <code>{id}</code>.</li>
+            <li>Start a transaction.</li>
+            <li>Insert a record into the Transaction table (type DEPOSIT).</li>
+            <li>Update <code>current_balance</code> by adding the deposit amount.</li>
+            <li>Commit the transaction.</li>
+            <li>Publish a “TransactionCreatedEvent.”</li>
+          </ol>
+        </li>
+      </ul>
+      <h3 id="section7-3">7.3 Withdraw</h3>
+      <ul>
+        <li><strong>Request:</strong> <code>POST /wallets/{id}/withdraw</code> + token.</li>
+        <li><strong>Process:</strong>
+          <ol>
+            <li>Validate the token and verify wallet ownership.</li>
+            <li>Check if <code>current_balance</code> is greater than or equal to the requested amount.</li>
+            <li>Start a transaction and insert a record into the Transaction table (type WITHDRAW).</li>
+            <li>Update <code>current_balance</code> by subtracting the withdrawal amount.</li>
+            <li>Commit the transaction.</li>
+            <li>Publish the corresponding event.</li>
+          </ol>
+        </li>
+      </ul>
+      <h3 id="section7-4">7.4 Transfer</h3>
+      <ul>
+        <li><strong>Request:</strong> <code>POST /wallets/{sourceId}/transfer/{destId}</code> + token + amount.</li>
+        <li><strong>Process:</strong>
+          <ol>
+            <li>Validate the token and confirm the user has permission to move funds from <code>sourceId</code>.</li>
+            <li>Check if there is sufficient balance in <code>sourceId</code>.</li>
+            <li>Within a single transaction:
+              <ul>
+                <li>Insert a debit transaction for <code>sourceId</code>.</li>
+                <li>Update the source wallet balance.</li>
+                <li>Insert a credit transaction for <code>destId</code>.</li>
+                <li>Update the destination wallet balance.</li>
+              </ul>
+            </li>
+            <li>Commit the transaction.</li>
+            <li>Publish a “TransferCompletedEvent” or similar.</li>
+          </ol>
+        </li>
+      </ul>
+      <h3 id="section7-5">7.5 Balance and Historical Queries</h3>
+      <ul>
+        <li><strong>Request:</strong> <code>GET /wallets/{id}/balance</code> + token.</li>
+        <li><strong>Authorization check:</strong> <code>token.user_id == wallet.user_id</code> (or admin).
+          <ul>
+            <li>Return the <code>current_balance</code>.</li>
+          </ul>
+        </li>
+        <li><strong>Request:</strong> <code>GET /wallets/{id}/balance?date=...</code> + token.</li>
+        <li><strong>Process:</strong> Perform the same access checks. Compute the historical balance by summing all transactions up to the specified date/time (or using snapshots).</li>
+      </ul>
+
+      <!-- Section 8: Reliability and Security Mechanisms -->
+      <h2 id="section8">8. Reliability and Security Mechanisms</h2>
+      <ul>
+        <li><strong>Atomic Transactions:</strong> Updating balances and inserting into the Transaction table must happen together to guarantee consistency.</li>
+        <li><strong>Isolation:</strong> Use a high isolation level (e.g., SERIALIZABLE) to avoid incorrect reads or negative balances under high concurrency.</li>
+        <li><strong>Audit Logs:</strong> Transaction table, plus logs for all critical operations (timestamps, user info).</li>
+        <li><strong>JWT Token Validation:</strong> Ensures only authenticated users reach the endpoints.</li>
+        <li><strong>Authorization (RBAC or ABAC):</strong>
+          <ul>
+            <li><em>RBAC (Role-Based Access Control):</em> e.g., admin vs. regular user roles.</li>
+            <li><em>ABAC (Attribute-Based Access Control):</em> e.g., <code>wallet.user_id == token.user_id</code>.</li>
+          </ul>
+        </li>
+        <li><strong>Replay/Idempotency Protection:</strong> Use a unique <code>requestId</code> for sensitive operations to avoid duplicates upon client retries.</li>
+        <li><strong>Encryption in Transit:</strong> Use HTTPS for communication between the client and the service, and preferably between internal services as well.</li>
+        <li><strong>Error &amp; Fraud Monitoring:</strong> Suspicious transactions can be flagged to anti-fraud services (via events).</li>
+      </ul>
+
+      <!-- Section 9: Observability and Monitoring -->
+      <h2 id="section9">9. Observability and Monitoring</h2>
+      <ul>
+        <li><strong>Structured Logs:</strong> Record all calls with key data (transactions, IDs, amounts).</li>
+        <li><strong>Metrics:</strong> Use Micrometer &amp; Actuator to track response time, throughput, errors, etc.</li>
+        <li><strong>Health Checks:</strong> (e.g., <code>/actuator/health</code>) to validate the Wallet Service’s availability.</li>
+        <li><strong>Alerts:</strong> Integrated into observability tools (Prometheus, Grafana, Kibana) for anomalies or error spikes.</li>
+      </ul>
+
+      <!-- Section 10: Final Considerations -->
+      <h2 id="section10">10. Final Considerations</h2>
+      <p>
+        This reactive and hybrid architecture (transactional persistence + event publishing) has been expanded to include security (token-based authentication, authorization rules, and business validations) and risk mitigation measures to prevent data loss or unauthorized access.
+      </p>
+      <p><strong>Key Benefits:</strong></p>
+      <ul>
+        <li><strong>Financial Consistency:</strong> Each operation occurs within atomic transactions in the database.</li>
+        <li><strong>Security and Privacy:</strong> JWT/OAuth2 ensures only authorized entities can manipulate wallets.</li>
+        <li><strong>Auditability:</strong> Transaction logs and events enable comprehensive tracking and auditing.</li>
+        <li><strong>Scalability:</strong> Spring WebFlux + R2DBC efficiently handles high traffic with minimal resource blocking.</li>
+        <li><strong>Decoupling:</strong> Events allow other services (notifications, reporting, anti-fraud) to function independently without burdening the main service.</li>
+      </ul>
+      <p><strong>Approval:</strong> Architecture and Security Teams</p>
+      <p><strong>Next Steps:</strong></p>
+      <ol>
+        <li>Deploy and configure the Identity Provider (Keycloak, Auth0, etc.) for issuing JWT/OAuth2 tokens.</li>
+        <li>Adjust the Wallet Service to validate tokens and apply authorization rules.</li>
+        <li>Set up CI/CD pipelines, provision the relational database (in reactive mode) and the message broker.</li>
+        <li>Develop consumer microservices (notifications, reporting, etc.) that process the published events.</li>
+      </ol>
+    </div><!-- /content -->
+  </div><!-- /page-container -->
+
+</body>
+</html>
